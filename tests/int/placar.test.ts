@@ -26,14 +26,14 @@ describe("placar", () => {
     expect(conf.status).toBe("confirmado");
   });
   it("vencedor B quando playerB ganha; quem lançou não confirma", async () => {
-    const { a, b, m } = await jogoMarcado();
+    const { b, m } = await jogoMarcado();
     const lancado = await lancarPlacar(testDb, m.id, b.id, [[4, 6], [2, 6]]);
     expect(lancado.winnerId).toBe(b.id);
     await expect(confirmarPlacar(testDb, m.id, b.id)).rejects.toThrow(/adversário/i);
   });
   it("contestar limpa o placar e volta a marcado", async () => {
-    const { a, b, m } = await jogoMarcado();
-    await lancarPlacar(testDb, m.id, a.id, [[6, 0], [6, 0]]);
+    const { b, m } = await jogoMarcado();
+    await lancarPlacar(testDb, m.id, m.playerAId, [[6, 0], [6, 0]]);
     const c = await contestarPlacar(testDb, m.id, b.id);
     expect(c.status).toBe("marcado");
     expect(c.score).toBeNull();
