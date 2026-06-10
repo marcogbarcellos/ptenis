@@ -40,7 +40,7 @@ export function CadastroForm() {
         </div>
       ))}
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
-      <Button className="w-full" disabled={pending}>{pending ? "Criando…" : "Criar conta"}</Button>
+      <Button type="submit" className="w-full" disabled={pending}>{pending ? "Criando…" : "Criar conta"}</Button>
     </form>
   );
 }

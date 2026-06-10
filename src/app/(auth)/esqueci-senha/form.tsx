@@ -17,7 +17,7 @@ export function EsqueciForm() {
         <Input id="email" name="email" type="email" required />
       </div>
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
-      <Button className="w-full" disabled={pending}>{pending ? "Enviando…" : "Enviar link"}</Button>
+      <Button type="submit" className="w-full" disabled={pending}>{pending ? "Enviando…" : "Enviar link"}</Button>
     </form>
   );
 }

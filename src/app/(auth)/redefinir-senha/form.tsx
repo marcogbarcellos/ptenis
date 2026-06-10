@@ -16,7 +16,7 @@ export function RedefinirForm({ token }: { token: string }) {
         <Input id="senha" name="senha" type="password" autoComplete="new-password" required minLength={6} />
       </div>
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
-      <Button className="w-full" disabled={pending}>{pending ? "Salvando…" : "Salvar nova senha"}</Button>
+      <Button type="submit" className="w-full" disabled={pending}>{pending ? "Salvando…" : "Salvar nova senha"}</Button>
     </form>
   );
 }

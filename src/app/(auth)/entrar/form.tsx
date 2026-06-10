@@ -19,7 +19,7 @@ export function EntrarForm() {
         <Input id="senha" name="senha" type="password" autoComplete="current-password" required />
       </div>
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
-      <Button className="w-full" disabled={pending}>{pending ? "Entrando…" : "Entrar"}</Button>
+      <Button type="submit" className="w-full" disabled={pending}>{pending ? "Entrando…" : "Entrar"}</Button>
     </form>
   );
 }
