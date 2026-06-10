@@ -1,5 +1,6 @@
 import type { Db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
+import { criarFinaisProntas } from "@/lib/services/temporada";
 
 export async function getJogo(db: Db, matchId: string) {
   const match = await db.match.findUnique({
@@ -41,4 +42,5 @@ export async function resolverPendencias(db: Db) {
     where: { status: "aguardando_confirmacao", reportedAt: { lt: limite } },
     data: { status: "confirmado", confirmedAt: new Date() },
   });
+  await criarFinaisProntas(db);
 }
