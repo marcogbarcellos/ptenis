@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SeasonStatus {
+  rascunho
+  inscricoes
+  liga
+  playoffs
+  encerrada
+}
+
+enum MatchType {
+  amistoso
+  liga
+  playoff
+}
+
+enum MatchStatus {
+  pendente
+  aberto
+  proposto
+  marcado
+  aguardando_confirmacao
+  confirmado
+  cancelado
+  wo
+}
+
+enum MatchFormat {
+  bo3_mtb
+  set_unico
+  proset8
+}
+
+enum PlayoffRound {
+  semi1
+  semi2
+  final
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String   @unique // E.164, chave de vinculação do bot (fase 2)
+  passwordHash String
+  level        Int      @default(3) // 1-7
+  availability Json?    // ex.: ["seg-noite","sab-manha"]
+  isAdmin      Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  sessions      Session[]
+  resetTokens   PasswordResetToken[]
+  seasonEntries SeasonEntry[]
+  divisions     DivisionPlayer[]
+  matchesA      Match[]              @relation("playerA")
+  matchesB      Match[]              @relation("playerB")
+  createdMatches Match[]             @relation("createdBy")
+  proposedMatches Match[]            @relation("proposedBy")
+  wonMatches    Match[]              @relation("winner")
+  reportedMatches Match[]            @relation("reportedBy")
+}
+
+model Session {
+  id        String   @id // sha256(token) em hex
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AppSettings {
+  id            Int    @id @default(1)
+  communityName String @default("PTenis")
+  inviteCode    String @default("PTENIS2026")
+  timezone      String @default("America/Sao_Paulo")
+}
+
+model Season {
+  id            String       @id @default(cuid())
+  name          String
+  status        SeasonStatus @default(rascunho)
+  inscricoesAte DateTime?
+  ligaAte       DateTime?
+  createdAt     DateTime     @default(now())
+
+  entries   SeasonEntry[]
+  divisions Division[]
+  matches   Match[]
+}
+
+model SeasonEntry {
+  seasonId  String
+  userId    String
+  createdAt DateTime @default(now())
+  season    Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([seasonId, userId])
+}
+
+model Division {
+  id       String @id @default(cuid())
+  seasonId String
+  name     String // "Divisão A"
+  order    Int
+  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  players DivisionPlayer[]
+  matches Match[]
+}
+
+model DivisionPlayer {
+  divisionId    String
+  userId        String
+  ordemInscricao Int     // desempate determinístico final
+  finalPosition Int?
+  division      Division @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([divisionId, userId])
+}
+
+model Match {
+  id           String       @id @default(cuid())
+  type         MatchType
+  status       MatchStatus
+  seasonId     String?
+  divisionId   String?
+  round        PlayoffRound?
+  playerAId    String
+  playerBId    String? // null apenas em amistoso aberto
+  createdById  String
+  scheduledAt  DateTime?
+  location     String?
+  note         String?
+  format       MatchFormat  @default(bo3_mtb)
+  proposedById String?
+  score        Json? // ex.: [[6,4],[3,6],[10,7]]
+  winnerId     String?
+  reportedById String?
+  reportedAt   DateTime?
+  confirmedAt  DateTime?
+  createdAt    DateTime     @default(now())
+
+  season     Season?   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  division   Division? @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+  playerA    User      @relation("playerA", fields: [playerAId], references: [id])
+  playerB    User?     @relation("playerB", fields: [playerBId], references: [id])
+  createdBy  User      @relation("createdBy", fields: [createdById], references: [id])
+  proposedBy User?     @relation("proposedBy", fields: [proposedById], references: [id])
+  winner     User?     @relation("winner", fields: [winnerId], references: [id])
+  reportedBy User?     @relation("reportedBy", fields: [reportedById], references: [id])
+
+  @@unique([divisionId, round]) // 1 semi1, 1 semi2, 1 final por divisão
+  @@index([status, type])
+  @@index([divisionId])
+  @@index([playerAId])
+  @@index([playerBId])
+}
