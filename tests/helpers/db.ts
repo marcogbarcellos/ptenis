@@ -5,13 +5,19 @@ const url =
   process.env.TEST_DATABASE_URL ??
   "postgresql://postgres:postgres@localhost:5433/ptenis_test";
 
+if (!new URL(url).pathname.includes("test"))
+  throw new Error(`Recusando operação destrutiva em banco não-teste: ${url}`);
+
 export const testDb = new PrismaClient({
   adapter: new PrismaPg({ connectionString: url }),
 });
 
 export async function resetDb() {
+  const tables = await testDb.$queryRaw<
+    { tablename: string }[]
+  >`SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename <> '_prisma_migrations'`;
   await testDb.$executeRawUnsafe(
-    `TRUNCATE "Match","DivisionPlayer","Division","SeasonEntry","Season","PasswordResetToken","Session","User","AppSettings" RESTART IDENTITY CASCADE`
+    `TRUNCATE ${tables.map((t) => `"${t.tablename}"`).join(",")} RESTART IDENTITY CASCADE`
   );
   await testDb.appSettings.create({ data: { id: 1 } });
 }
@@ -25,7 +31,7 @@ export async function criarUsuario(
     data: {
       name: extra.name ?? `Jogador ${seq}`,
       email: `jogador${seq}-${Date.now()}@teste.com`,
-      phone: `+55119${String(Date.now() % 100000000).padStart(8, "0")}${seq % 10}`,
+      phone: `+5511${900000000 + seq}`,
       passwordHash: "hash-fake",
       level: extra.level ?? 3,
       isAdmin: extra.isAdmin ?? false,

@@ -6,6 +6,8 @@ const url =
   "postgresql://postgres:postgres@localhost:5433/ptenis_test";
 
 export default async function setup() {
+  if (!new URL(url).pathname.includes("test"))
+    throw new Error(`Recusando operação destrutiva em banco não-teste: ${url}`);
   const client = new Client({ connectionString: url });
   await client.connect();
   await client.query("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");

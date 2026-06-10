@@ -3,7 +3,10 @@ import { cookies } from "next/headers";
 import type { Db } from "@/lib/db";
 
 const COOKIE = "ptenis_session";
-const TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 dias
+const TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 dias (validade da sessão no banco)
+// Cookie mais longo que a sessão: o expiresAt no banco é a fonte de verdade,
+// e o cookie precisa sobreviver às renovações deslizantes do expiresAt.
+const COOKIE_MAX_AGE_S = 365 * 24 * 60 * 60; // 365 dias
 
 export const gerarToken = () => randomBytes(32).toString("base64url");
 export const hashToken = (token: string) =>
@@ -20,11 +23,12 @@ export async function criarSessao(db: Db, userId: string) {
 export async function validarSessao(db: Db, token: string) {
   const s = await db.session.findUnique({
     where: { id: hashToken(token) },
-    include: { user: true },
+    include: { user: { omit: { passwordHash: true } } },
   });
   if (!s || s.expiresAt < new Date() || !s.user.isActive) return null;
   if (s.expiresAt.getTime() - Date.now() < TTL_MS / 2) {
-    await db.session.update({
+    // updateMany: se a sessão sumiu numa corrida com logout, não lança P2025.
+    await db.session.updateMany({
       where: { id: s.id },
       data: { expiresAt: new Date(Date.now() + TTL_MS) },
     });
@@ -41,7 +45,7 @@ export async function setSessionCookie(token: string) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: TTL_MS / 1000,
+    maxAge: COOKIE_MAX_AGE_S,
     path: "/",
   });
 }
