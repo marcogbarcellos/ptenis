@@ -1,8 +1,6 @@
-// Prisma 7 requires a driver adapter — use @prisma/adapter-pg for standard PostgreSQL.
-// The DATABASE_URL is no longer read from schema.prisma (moved to prisma.config.ts for CLI),
-// so we pass it explicitly to the adapter here for runtime connections.
 import { PrismaClient, Prisma } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 
 function makeClient(): PrismaClient {
   const connectionString =
@@ -10,7 +8,8 @@ function makeClient(): PrismaClient {
     (() => {
       throw new Error("DATABASE_URL is not set");
     })();
-  const adapter = new PrismaPg({ connectionString });
+  const pool = new pg.Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }
 
