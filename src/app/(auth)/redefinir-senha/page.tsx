@@ -9,7 +9,7 @@ export default async function RedefinirSenhaPage({ searchParams }: {
     <Card>
       <CardHeader><CardTitle>Nova senha</CardTitle></CardHeader>
       <CardContent>
-        {token ? <RedefinirForm token={token} /> : <p className="text-sm text-destructive">Link inválido — peça um novo em "Esqueci a senha".</p>}
+        {token ? <RedefinirForm token={token} /> : <p className="text-sm text-destructive">Link inválido — peça um novo em “Esqueci a senha”.</p>}
       </CardContent>
     </Card>
   );
