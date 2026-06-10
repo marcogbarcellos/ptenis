@@ -80,6 +80,8 @@ export async function adminDefinirPlacar(db: Db, matchId: string, sets: number[]
       score: sets as Prisma.InputJsonValue,
       winnerId: vencedor === "A" ? match.playerAId : match.playerBId,
       confirmedAt: new Date(),
+      reportedById: null,
+      reportedAt: null,
     },
   });
 }
@@ -93,6 +95,6 @@ export async function adminMarcarWO(db: Db, matchId: string, vencedorId: string)
     throw new AppError("Esse jogo já foi resolvido.");
   return db.match.update({
     where: { id: matchId },
-    data: { status: "wo", winnerId: vencedorId, score: Prisma.DbNull, confirmedAt: new Date() },
+    data: { status: "wo", winnerId: vencedorId, score: Prisma.DbNull, confirmedAt: new Date(), reportedById: null, reportedAt: null },
   });
 }
