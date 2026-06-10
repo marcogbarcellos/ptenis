@@ -6,12 +6,33 @@ import { seedPlayoffs, vencedoresDasSemis } from "@/lib/playoffs";
 
 export async function criarTemporada(
   db: Db,
-  input: { nome: string; inscricoesAte?: Date | null; ligaAte?: Date | null }
+  input: { nome: string; inscricoesAte?: Date | null; gruposAte?: Date | null; ligaAte?: Date | null; numGrupos?: number }
 ) {
   if (!input.nome.trim()) throw new AppError("Dê um nome à temporada.");
-  return db.season.create({
-    data: { name: input.nome.trim(), inscricoesAte: input.inscricoesAte ?? null, ligaAte: input.ligaAte ?? null },
-  });
+  const numGrupos = Math.min(7, Math.max(0, input.numGrupos ?? 0));
+  const client = db as { $transaction?: <T>(fn: (tx: Db) => Promise<T>) => Promise<T> };
+  const executar = async (tx: Db) => {
+    const season = await tx.season.create({
+      data: {
+        name: input.nome.trim(),
+        inscricoesAte: input.inscricoesAte ?? null,
+        gruposAte: input.gruposAte ?? null,
+        ligaAte: input.ligaAte ?? null,
+      },
+    });
+    if (numGrupos > 0) {
+      await tx.division.createMany({
+        data: Array.from({ length: numGrupos }, (_, i) => ({
+          seasonId: season.id,
+          name: `Divisão ${String.fromCharCode(65 + i)}`,
+          order: i,
+        })),
+      });
+    }
+    return season;
+  };
+  if (client.$transaction) return client.$transaction(executar);
+  return executar(db);
 }
 
 export async function abrirInscricoes(db: Db, seasonId: string) {
@@ -22,14 +43,18 @@ export async function abrirInscricoes(db: Db, seasonId: string) {
   if (count === 0) throw new AppError("Essa temporada não está em rascunho.");
 }
 
-export async function inscrever(db: Db, seasonId: string, userId: string) {
+export async function inscrever(db: Db, seasonId: string, userId: string, preferredDivisionId?: string | null) {
   const season = await db.season.findUnique({ where: { id: seasonId } });
   if (!season || season.status !== "inscricoes")
     throw new AppError("As inscrições não estão abertas.");
+  if (preferredDivisionId) {
+    const div = await db.division.findUnique({ where: { id: preferredDivisionId } });
+    if (!div || div.seasonId !== seasonId) throw new AppError("Grupo inválido.");
+  }
   return db.seasonEntry.upsert({
     where: { seasonId_userId: { seasonId, userId } },
-    update: {},
-    create: { seasonId, userId },
+    update: { preferredDivisionId: preferredDivisionId ?? null },
+    create: { seasonId, userId, preferredDivisionId: preferredDivisionId ?? null },
   });
 }
 
@@ -65,25 +90,41 @@ export async function iniciarLiga(
     }
   }
 
-  // tx exige PrismaClient; em testes recebemos o client direto
   const client = db as { $transaction?: <T>(fn: (tx: Db) => Promise<T>) => Promise<T> };
   const executar = async (tx: Db) => {
+    const existentes = await tx.division.findMany({ where: { seasonId } });
+    const nomeParaId = new Map(existentes.map((d) => [d.name.trim(), d.id]));
+    const idsUsados = new Set<string>();
+
     for (const [i, d] of divisoes.entries()) {
-      const division = await tx.division.create({
-        data: { seasonId, name: d.name.trim(), order: i },
-      });
+      let divisionId = nomeParaId.get(d.name.trim());
+      if (divisionId) {
+        await tx.division.update({ where: { id: divisionId }, data: { order: i } });
+        idsUsados.add(divisionId);
+      } else {
+        const criada = await tx.division.create({
+          data: { seasonId, name: d.name.trim(), order: i },
+        });
+        divisionId = criada.id;
+        idsUsados.add(divisionId);
+      }
+      await tx.divisionPlayer.deleteMany({ where: { divisionId } });
       await tx.divisionPlayer.createMany({
         data: d.userIds.map((userId) => ({
-          divisionId: division.id, userId, ordemInscricao: ordem.get(userId)!,
+          divisionId, userId, ordemInscricao: ordem.get(userId)!,
         })),
       });
       await tx.match.createMany({
         data: gerarConfrontos(d.userIds).map(([a, b]) => ({
           type: "liga" as const, status: "pendente" as const,
-          seasonId, divisionId: division.id,
+          seasonId, divisionId,
           playerAId: a, playerBId: b, createdById: a,
         })),
       });
+    }
+    // Remove divisões pré-criadas que não foram usadas
+    for (const d of existentes) {
+      if (!idsUsados.has(d.id)) await tx.division.delete({ where: { id: d.id } });
     }
     await tx.season.update({ where: { id: seasonId }, data: { status: "liga" } });
   };

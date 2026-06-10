@@ -6,10 +6,10 @@ import { runAction, type ActionState } from "@/lib/action-state";
 import { requireUser } from "@/lib/auth/current-user";
 import { cancelarInscricao, inscrever } from "@/lib/services/temporada";
 
-export async function inscreverAction(seasonId: string): Promise<ActionState> {
+export async function inscreverAction(seasonId: string, preferredDivisionId?: string): Promise<ActionState> {
   const user = await requireUser();
   const r = await runAction(async () => {
-    await inscrever(db, seasonId, user.id);
+    await inscrever(db, seasonId, user.id, preferredDivisionId || null);
   });
   revalidatePath("/temporada");
   return r;

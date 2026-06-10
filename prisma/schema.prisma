@@ -97,6 +97,7 @@ model Season {
   name          String
   status        SeasonStatus @default(rascunho)
   inscricoesAte DateTime?
+  gruposAte     DateTime?
   ligaAte       DateTime?
   createdAt     DateTime     @default(now())
 
@@ -106,11 +107,13 @@ model Season {
 }
 
 model SeasonEntry {
-  seasonId  String
-  userId    String
-  createdAt DateTime @default(now())
-  season    Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seasonId            String
+  userId              String
+  preferredDivisionId String?
+  createdAt           DateTime  @default(now())
+  season              Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredDivision   Division? @relation("PreferredDivision", fields: [preferredDivisionId], references: [id], onDelete: SetNull)
 
   @@id([seasonId, userId])
 }
@@ -118,12 +121,13 @@ model SeasonEntry {
 model Division {
   id       String @id @default(cuid())
   seasonId String
-  name     String // "Divisão A"
+  name     String
   order    Int
   season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
-  players DivisionPlayer[]
-  matches Match[]
+  players     DivisionPlayer[]
+  matches     Match[]
+  preferredBy SeasonEntry[]    @relation("PreferredDivision")
 }
 
 model DivisionPlayer {

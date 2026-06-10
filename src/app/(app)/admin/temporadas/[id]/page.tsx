@@ -39,8 +39,14 @@ export default async function AdminTemporadaPage({ params }: { params: Promise<{
       {season.status === "inscricoes" && (
         <DivisoesEditor
           seasonId={season.id}
-          inscritos={season.entries.map((e) => ({ id: e.user.id, name: e.user.name, level: e.user.level }))}
+          inscritos={season.entries.map((e) => ({
+            id: e.user.id,
+            name: e.user.name,
+            level: e.user.level,
+            preferredDivisionId: e.preferredDivisionId,
+          }))}
           sugestao={sugerirDivisoes(season.entries.map((e) => ({ userId: e.userId, level: e.user.level })))}
+          divisoesPre={season.divisions.map((d) => ({ id: d.id, name: d.name, order: d.order }))}
         />
       )}
 

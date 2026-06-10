@@ -21,7 +21,9 @@ export async function criarTemporadaAction(_: ActionState, formData: FormData): 
   const r = await runAction(async () => {
     const s = await criarTemporada(db, {
       nome: String(formData.get("nome") ?? ""),
+      numGrupos: Number(formData.get("numGrupos") ?? 0),
       inscricoesAte: formData.get("inscricoesAte") ? new Date(String(formData.get("inscricoesAte"))) : null,
+      gruposAte: formData.get("gruposAte") ? new Date(String(formData.get("gruposAte"))) : null,
       ligaAte: formData.get("ligaAte") ? new Date(String(formData.get("ligaAte"))) : null,
     });
     id = s.id;

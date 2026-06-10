@@ -27,16 +27,27 @@ export default async function TemporadaPage({ searchParams }: {
     const inscritos = await db.seasonEntry.findMany({
       where: { seasonId: season.id }, include: { user: true }, orderBy: { createdAt: "asc" },
     });
-    const inscrito = inscritos.some((e) => e.userId === user.id);
+    const minhaEntry = inscritos.find((e) => e.userId === user.id);
+    const inscrito = !!minhaEntry;
+    const datas = [
+      season.inscricoesAte && `Inscrições até ${formatarData(season.inscricoesAte, timezone)}`,
+      season.gruposAte && `Grupos até ${formatarData(season.gruposAte, timezone)}`,
+      season.ligaAte && `Playoffs até ${formatarData(season.ligaAte, timezone)}`,
+    ].filter(Boolean);
     return (
       <div className="space-y-4">
         <header>
           <h1 className="text-xl font-bold">{season.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            Inscrições abertas{season.inscricoesAte && ` até ${formatarData(season.inscricoesAte, timezone)}`}
-          </p>
+          {datas.length > 0 && (
+            <p className="text-sm text-muted-foreground">{datas.join(" · ")}</p>
+          )}
         </header>
-        <InscricaoButtons seasonId={season.id} inscrito={inscrito} />
+        <InscricaoButtons
+          seasonId={season.id}
+          inscrito={inscrito}
+          divisoes={season.divisions.map((d) => ({ id: d.id, name: d.name }))}
+          preferredDivisionId={minhaEntry?.preferredDivisionId}
+        />
         <section className="rounded-2xl border bg-card p-4">
           <p className="mb-2 font-semibold">{inscritos.length} inscrito{inscritos.length !== 1 && "s"}</p>
           <p className="text-sm text-muted-foreground">{inscritos.map((e) => e.user.name.split(" ")[0]).join(", ") || "Seja o primeiro!"}</p>
@@ -77,8 +88,8 @@ export default async function TemporadaPage({ searchParams }: {
         <h1 className="text-xl font-bold">{season.name}</h1>
         <p className="text-sm text-muted-foreground">
           {season.status === "liga"
-            ? <>Fase de liga{season.ligaAte && ` — até ${formatarData(season.ligaAte, timezone)}`}</>
-            : "Playoffs! 🔥"}
+            ? <>Fase de grupos{season.gruposAte && ` — até ${formatarData(season.gruposAte, timezone)}`}</>
+            : <>Playoffs 🔥{season.ligaAte && ` — até ${formatarData(season.ligaAte, timezone)}`}</>}
         </p>
       </header>
 
