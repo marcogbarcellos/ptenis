@@ -3,7 +3,8 @@ import { z } from "zod";
 export function normalizarTelefone(raw: string): string | null {
   const limpo = raw.replace(/[\s().-]/g, "");
   if (/^\+\d{8,15}$/.test(limpo)) return limpo;
-  if (/^\d{10,11}$/.test(limpo)) return `+55${limpo}`;
+  // Local (assume +55): 10-11 dígitos, sem zero de tronco (ex.: "011..." não vira E.164 válido).
+  if (/^[1-9]\d{9,10}$/.test(limpo)) return `+55${limpo}`;
   return null;
 }
 
@@ -12,7 +13,11 @@ export const telefoneSchema = z
   .transform((v, ctx) => {
     const t = normalizarTelefone(v);
     if (!t) {
-      ctx.addIssue({ code: "custom", message: "Telefone inválido. Use DDD + número (ex.: 11 91234-5678)." });
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Telefone inválido. Use DDD + número (ex.: 11 91234-5678) ou formato internacional (+351 912 345 678).",
+      });
       return z.NEVER;
     }
     return t;
@@ -26,7 +31,9 @@ export const cadastroSchema = z.object({
   email: z.string().trim().toLowerCase().email("E-mail inválido."),
   telefone: telefoneSchema,
   senha: senhaSchema,
-  respostas: z.array(z.coerce.number().min(1).max(4)).length(4, "Responda as 4 perguntas."),
+  respostas: z
+    .array(z.coerce.number().min(1, "Responda as 4 perguntas.").max(4, "Responda as 4 perguntas."))
+    .length(4, "Responda as 4 perguntas."),
 });
 
 export const entrarSchema = z.object({

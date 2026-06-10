@@ -2,6 +2,9 @@ import { Resend } from "resend";
 
 type Template = { subject: string; html: string };
 
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+
 const wrap = (corpo: string) =>
   `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
      <h2 style="color:#15803d">🎾 PTenis</h2>${corpo}
@@ -18,23 +21,24 @@ export const emailResetSenha = (link: string): Template => ({
 
 export const emailPropostaRecebida = (deQuem: string, linkJogo: string): Template => ({
   subject: `${deQuem} propôs uma data de jogo — PTenis`,
-  html: wrap(`<p><strong>${deQuem}</strong> propôs data para um jogo com você.</p>${botao(linkJogo, "Ver proposta")}`),
+  html: wrap(`<p><strong>${escapeHtml(deQuem)}</strong> propôs data para um jogo com você.</p>${botao(linkJogo, "Ver proposta")}`),
 });
 
 export const emailAmistosoCombinado = (deQuem: string, linkJogo: string): Template => ({
   subject: `${deQuem} marcou um amistoso com você — PTenis`,
-  html: wrap(`<p><strong>${deQuem}</strong> marcou um amistoso com você no app.</p>${botao(linkJogo, "Ver jogo")}`),
+  html: wrap(`<p><strong>${escapeHtml(deQuem)}</strong> marcou um amistoso com você no app.</p>${botao(linkJogo, "Ver jogo")}`),
 });
 
 export const emailPlacarParaConfirmar = (deQuem: string, linkJogo: string): Template => ({
   subject: `Placar para você confirmar — PTenis`,
-  html: wrap(`<p><strong>${deQuem}</strong> lançou o placar de um jogo com você. Sem resposta em 48h, confirma sozinho.</p>${botao(linkJogo, "Confirmar placar")}`),
+  html: wrap(`<p><strong>${escapeHtml(deQuem)}</strong> lançou o placar de um jogo com você. Sem resposta em 48h, confirma sozinho.</p>${botao(linkJogo, "Confirmar placar")}`),
 });
 
 export async function sendEmail(to: string, template: Template) {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.log(`[email desativado] para=${to} assunto=${template.subject}`);
+    console.log(template.html);
     return;
   }
   try {
@@ -50,4 +54,10 @@ export async function sendEmail(to: string, template: Template) {
   }
 }
 
-export const linkJogo = (id: string) => `${process.env.APP_URL ?? ""}/jogo/${id}`;
+export const appUrl = () => {
+  const u = process.env.APP_URL;
+  if (!u) throw new Error("APP_URL não configurada.");
+  return u;
+};
+
+export const linkJogo = (id: string) => `${appUrl()}/jogo/${id}`;

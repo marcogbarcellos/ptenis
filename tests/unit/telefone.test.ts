@@ -14,4 +14,7 @@ describe("normalizarTelefone", () => {
     expect(normalizarTelefone("123")).toBeNull();
     expect(normalizarTelefone("abc")).toBeNull();
   });
+  it("rejeita número local com zero de tronco", () => {
+    expect(normalizarTelefone("011 3123-4567")).toBeNull();
+  });
 });

@@ -13,7 +13,7 @@ export function RedefinirForm({ token }: { token: string }) {
       <input type="hidden" name="token" value={token} />
       <div className="space-y-1">
         <Label htmlFor="senha">Nova senha</Label>
-        <Input id="senha" name="senha" type="password" autoComplete="new-password" required />
+        <Input id="senha" name="senha" type="password" autoComplete="new-password" required minLength={6} />
       </div>
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
       <Button className="w-full" disabled={pending}>{pending ? "Salvando…" : "Salvar nova senha"}</Button>

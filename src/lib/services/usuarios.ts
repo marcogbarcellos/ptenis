@@ -49,7 +49,14 @@ export async function redefinirSenha(db: Db, token: string, novaSenha: string) {
   const t = await db.passwordResetToken.findUnique({ where: { tokenHash: sha256(token) } });
   if (!t || t.usedAt || t.expiresAt < new Date())
     throw new AppError("Link inválido ou expirado. Peça um novo.");
-  await db.passwordResetToken.update({ where: { id: t.id }, data: { usedAt: new Date() } });
+  // Resgate atômico do token: numa corrida, só uma requisição consegue marcá-lo como usado.
+  const { count } = await db.passwordResetToken.updateMany({
+    where: { id: t.id, usedAt: null },
+    data: { usedAt: new Date() },
+  });
+  if (count === 0) throw new AppError("Link inválido ou expirado. Peça um novo.");
+  // Redefinir a senha derruba todas as sessões ativas do usuário.
+  await db.session.deleteMany({ where: { userId: t.userId } });
   return db.user.update({
     where: { id: t.userId },
     data: { passwordHash: await hashSenha(novaSenha) },

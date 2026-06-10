@@ -6,7 +6,7 @@ import { ActionState, runAction } from "@/lib/action-state";
 import { cadastroSchema, entrarSchema, senhaSchema } from "@/lib/validation/schemas";
 import { autenticar, redefinirSenha, registrar, solicitarResetSenha } from "@/lib/services/usuarios";
 import { criarSessao, clearSessionCookie, destruirSessao, getSessionToken, setSessionCookie } from "@/lib/auth/session";
-import { emailResetSenha, sendEmail } from "@/lib/services/notificacoes";
+import { appUrl, emailResetSenha, sendEmail } from "@/lib/services/notificacoes";
 import { AppError } from "@/lib/errors";
 
 function primeiraMensagem(error: { issues: { message: string }[] }) {
@@ -58,7 +58,7 @@ export async function esqueciSenhaAction(_: ActionState, formData: FormData): Pr
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const r = await solicitarResetSenha(db, email);
     if (r) {
-      const link = `${process.env.APP_URL}/redefinir-senha?token=${r.token}`;
+      const link = `${appUrl()}/redefinir-senha?token=${r.token}`;
       await sendEmail(r.user.email, emailResetSenha(link));
     }
     // sempre ok — não vaza se o e-mail existe

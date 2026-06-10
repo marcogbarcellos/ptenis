@@ -23,7 +23,8 @@ export function CadastroForm() {
       {campos.map((c) => (
         <div key={c.id} className="space-y-1">
           <Label htmlFor={c.id}>{c.label}</Label>
-          <Input id={c.id} name={c.id} type={c.type} autoComplete={c.auto} placeholder={c.placeholder} required />
+          <Input id={c.id} name={c.id} type={c.type} autoComplete={c.auto} placeholder={c.placeholder} required
+            minLength={c.id === "senha" ? 6 : undefined} />
         </div>
       ))}
       <Separator className="my-4" />
