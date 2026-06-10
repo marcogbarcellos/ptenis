@@ -43,3 +43,6 @@ next-env.d.ts
 
 # browser automation artifacts
 .playwright-mcp/
+
+# internal planning / AI agent collaboration docs
+docs/superpowers/
