@@ -24,8 +24,8 @@ export const viewport: Viewport = { themeColor: "#15803d", width: "device-width"
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="antialiased">
         {children}
         <Toaster position="top-center" />
       </body>
