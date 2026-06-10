@@ -1,5 +1,5 @@
 "use client";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -15,9 +15,10 @@ export function ConfirmButton({ titulo, descricao, acao, children, variant = "ou
   children: React.ReactNode;
   variant?: "outline" | "destructive" | "default" | "secondary";
 }) {
+  const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   return (
-    <AlertDialog>
+    <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
         disabled={pending}
         className={cn(buttonVariants({ variant }), "w-full")}
@@ -30,12 +31,13 @@ export function ConfirmButton({ titulo, descricao, acao, children, variant = "ou
           <AlertDialogDescription>{descricao}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Voltar</AlertDialogCancel>
-          <AlertDialogAction onClick={() => start(async () => {
+          <AlertDialogCancel disabled={pending}>Voltar</AlertDialogCancel>
+          <AlertDialogAction disabled={pending} onClick={() => start(async () => {
             const r = await acao();
-            if (!r.ok && r.error) toast.error(r.error);
+            if (r.ok) setOpen(false);
+            else if (r.error) toast.error(r.error);
           })}>
-            Confirmar
+            {pending ? "Confirmando…" : "Confirmar"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
