@@ -79,13 +79,16 @@ export async function iniciarLiga(
   });
   const ordem = new Map(entries.map((e, i) => [e.userId, i]));
 
+  // Divisões com < 2 jogadores são puladas silenciosamente (ex: grupos pré-criados ainda vazios)
+  const divisoesValidas = divisoes.filter((d) => d.name.trim() && d.userIds.length >= 2);
+  if (divisoesValidas.length === 0)
+    throw new AppError("Nenhum grupo tem jogadores suficientes para começar. Aguarde as inscrições.");
+
   const vistos = new Set<string>();
-  for (const d of divisoes) {
-    if (!d.name.trim()) throw new AppError("Toda divisão precisa de nome.");
-    if (d.userIds.length < 2) throw new AppError(`${d.name} precisa de pelo menos 2 jogadores.`);
+  for (const d of divisoesValidas) {
     for (const id of d.userIds) {
-      if (!ordem.has(id)) throw new AppError("Há jogador não inscrito numa divisão.");
-      if (vistos.has(id)) throw new AppError("Jogador repetido em mais de uma divisão.");
+      if (!ordem.has(id)) throw new AppError("Há jogador não inscrito num grupo.");
+      if (vistos.has(id)) throw new AppError("Jogador repetido em mais de um grupo.");
       vistos.add(id);
     }
   }
@@ -96,7 +99,7 @@ export async function iniciarLiga(
     const nomeParaId = new Map(existentes.map((d) => [d.name.trim(), d.id]));
     const idsUsados = new Set<string>();
 
-    for (const [i, d] of divisoes.entries()) {
+    for (const [i, d] of divisoesValidas.entries()) {
       let divisionId = nomeParaId.get(d.name.trim());
       if (divisionId) {
         await tx.division.update({ where: { id: divisionId }, data: { order: i } });

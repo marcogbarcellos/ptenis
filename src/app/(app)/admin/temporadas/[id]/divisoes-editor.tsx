@@ -61,7 +61,8 @@ export function DivisoesEditor({ seasonId, inscritos, sugestao, divisoesPre = []
           <p className="text-sm font-semibold">
             {d.name} <span className="font-normal text-muted-foreground">({d.userIds.length} jogadores)</span>
             {d.userIds.length > 12 && <span className="text-destructive"> — grande demais, round-robin pesado!</span>}
-            {d.userIds.length > 0 && d.userIds.length < 2 && <span className="text-destructive"> — mínimo 2</span>}
+            {d.userIds.length === 1 && <span className="text-muted-foreground"> — será ignorado (mín. 2)</span>}
+            {d.userIds.length === 0 && <span className="text-muted-foreground"> — vazio, será ignorado</span>}
           </p>
           {inscritos.filter((j) => (atrib[j.id] ?? 0) === i).map((j) => (
             <div key={j.id} className="flex items-center justify-between gap-2 text-sm">
