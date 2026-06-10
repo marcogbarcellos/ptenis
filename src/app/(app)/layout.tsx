@@ -4,12 +4,12 @@ import { db } from "@/lib/db";
 import { resolverPendencias } from "@/lib/services/jogos";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  await requireUser();
+  const user = await requireUser();
   await resolverPendencias(db);
   return (
     <div className="mx-auto min-h-dvh max-w-md pb-28">
       <main className="p-4">{children}</main>
-      <BottomNav />
+      <BottomNav isAdmin={user.isAdmin} />
     </div>
   );
 }

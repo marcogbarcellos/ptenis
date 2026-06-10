@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Plus, Trophy, User, Users } from "lucide-react";
+import { Home, Plus, Trophy, User, Users, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const itens = [
+const itensBase = [
   { href: "/", icone: Home, rotulo: "Início" },
   { href: "/temporada", icone: Trophy, rotulo: "Temporada" },
   { href: "/jogar", icone: Plus, rotulo: "Jogar", destaque: true },
@@ -12,8 +12,11 @@ const itens = [
   { href: "/perfil", icone: User, rotulo: "Perfil" },
 ] as const;
 
-export function BottomNav() {
+const itemAdmin = { href: "/admin/temporadas", icone: ShieldCheck, rotulo: "Admin" } as const;
+
+export function BottomNav({ isAdmin }: { isAdmin?: boolean }) {
   const pathname = usePathname();
+  const itens = isAdmin ? [...itensBase, itemAdmin] : itensBase;
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="mx-auto flex max-w-md items-center justify-around pb-[env(safe-area-inset-bottom)]">
