@@ -9,6 +9,8 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  if (process.env.NODE_ENV === "production" && !process.env.SEED_ADMIN_PASSWORD)
+    throw new Error("Defina SEED_ADMIN_PASSWORD em produção.");
   await prisma.appSettings.upsert({
     where: { id: 1 },
     update: {},
@@ -22,6 +24,7 @@ async function main() {
     create: {
       name: "Marco",
       email,
+      // upsert chaveia por email; se SEED_ADMIN_EMAIL mudar entre execuções, este phone fixo colide (unique)
       phone: "+550000000001",
       passwordHash: await hash(password),
       level: 4,
@@ -31,4 +34,9 @@ async function main() {
   console.log(`Seed ok: admin ${email}`);
 }
 
-main().finally(() => prisma.$disconnect());
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());
