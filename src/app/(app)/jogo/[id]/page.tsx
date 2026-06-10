@@ -8,6 +8,7 @@ import { ResponderPlacar } from "@/components/responder-placar";
 import { AceitarConviteButton } from "@/components/aceitar-convite-button";
 import { ConfirmButton } from "@/components/confirm-button";
 import { cancelarJogoAction } from "@/app/(app)/actions";
+import { PropostaData } from "@/components/proposta-data";
 
 export default async function JogoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -47,6 +48,13 @@ export default async function JogoPage({ params }: { params: Promise<{ id: strin
       {match.status === "marcado" && souParticipante && match.playerB && (
         <PlacarForm matchId={match.id} format={match.format}
           nomeA={match.playerA.name} nomeB={match.playerB.name} />
+      )}
+
+      {souParticipante && match.type !== "amistoso" &&
+        ["pendente", "proposto"].includes(match.status) && (
+          <PropostaData matchId={match.id}
+            possoAceitar={match.status === "proposto" && match.proposedById !== user.id}
+            contraproposta={match.status === "proposto"} />
       )}
 
       {match.status === "aguardando_confirmacao" && souParticipante && (
