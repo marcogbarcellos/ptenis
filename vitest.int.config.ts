@@ -8,5 +8,6 @@ export default defineConfig({
     globalSetup: "tests/helpers/global-setup.ts",
     fileParallelism: false,
     passWithNoTests: true,
+    env: { APP_URL: "http://localhost:3000" },
   },
 });
