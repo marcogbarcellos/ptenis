@@ -54,3 +54,21 @@ export function nivelLabel(nivel: number): string {
   if (nivel <= 4) return "Intermediário";
   return "Avançado";
 }
+
+// Faixas de nível (N1 → N7) em linguagem simples, pra o aluno se situar na hora de escolher o grupo.
+const FAIXAS_DIVISAO = [
+  "Iniciante — começando agora",
+  "Iniciante — ainda pegando o jeito",
+  "Intermediário — trocas no ritmo leve",
+  "Intermediário — ritmo médio, com direção",
+  "Avançado — ritmo forte",
+  "Avançado — efeito e profundidade",
+  "Competitivo — nível de torneio",
+] as const;
+
+// Descrição do nível de uma divisão pela posição (0 = mais forte, "A"). Escala com o total de grupos.
+export function descricaoDivisao(index: number, total: number): string {
+  if (total <= 1) return "Aberto a todos os níveis";
+  const repLevel = Math.round(7 - (index * 6) / (total - 1)); // index 0 → N7, último → N1
+  return FAIXAS_DIVISAO[Math.min(7, Math.max(1, repLevel)) - 1];
+}
