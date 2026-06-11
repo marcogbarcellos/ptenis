@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { ActionState, runAction } from "@/lib/action-state";
 import { cadastroSchema, entrarSchema, senhaSchema } from "@/lib/validation/schemas";
 import { autenticar, redefinirSenha, registrar, solicitarResetSenha } from "@/lib/services/usuarios";
+import { autoInscreverNaLigaAtiva } from "@/lib/services/temporada";
 import { criarSessao, clearSessionCookie, destruirSessao, getSessionToken, setSessionCookie } from "@/lib/auth/session";
 import { appUrl, emailResetSenha, sendEmail } from "@/lib/services/notificacoes";
 import { AppError } from "@/lib/errors";
@@ -15,6 +16,7 @@ function primeiraMensagem(error: { issues: { message: string }[] }) {
 
 export async function cadastroAction(_: ActionState, formData: FormData): Promise<ActionState> {
   let userId: string | null = null;
+  let nivel = 3;
   const result = await runAction(async () => {
     const parsed = cadastroSchema.safeParse({
       codigo: formData.get("codigo"),
@@ -27,10 +29,13 @@ export async function cadastroAction(_: ActionState, formData: FormData): Promis
     if (!parsed.success) throw new AppError(primeiraMensagem(parsed.error));
     const user = await registrar(db, parsed.data);
     userId = user.id;
+    nivel = user.level;
   });
   if (!result.ok) return result;
+  // Auto-inscrição na liga aberta (best-effort: uma falha aqui nunca derruba o cadastro).
+  const entrou = await autoInscreverNaLigaAtiva(db, userId!, nivel).catch(() => null);
   await setSessionCookie(await criarSessao(db, userId!));
-  redirect("/");
+  redirect(entrou ? "/temporada?bemvindo=1" : "/");
 }
 
 export async function entrarAction(_: ActionState, formData: FormData): Promise<ActionState> {

@@ -1,10 +1,13 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { APP_URL } from "@/lib/env";
+import { getSettings } from "@/lib/settings";
 import { getClassificacao } from "@/lib/services/temporada";
 import { sugerirDivisoes } from "@/lib/divisoes";
 import { placarTexto } from "@/lib/format";
 import { ConfirmButton } from "@/components/confirm-button";
 import { TabelaClassificacao } from "@/components/tabela-classificacao";
+import { ConviteCard } from "./convite-card";
 import { DivisoesEditor } from "./divisoes-editor";
 import { JogoControles } from "./jogo-controles";
 import {
@@ -22,12 +25,17 @@ export default async function AdminTemporadaPage({ params }: { params: Promise<{
   });
   if (!season) notFound();
 
+  const { inviteCode } = await getSettings();
+  const linkConvite = `${APP_URL}/cadastro?c=${encodeURIComponent(inviteCode)}`;
+
   return (
     <div className="space-y-5">
       <header>
         <h1 className="text-xl font-bold">{season.name}</h1>
         <p className="text-sm text-muted-foreground">Status: {season.status}</p>
       </header>
+
+      {["rascunho", "inscricoes"].includes(season.status) && <ConviteCard link={linkConvite} />}
 
       {season.status === "rascunho" && (
         <ConfirmButton titulo="Abrir inscrições?" descricao="A temporada aparece para todo mundo se inscrever."

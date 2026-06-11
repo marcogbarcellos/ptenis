@@ -3,6 +3,7 @@ import { AppError } from "@/lib/errors";
 import { gerarConfrontos } from "@/lib/round-robin";
 import { computeStandings } from "@/lib/classificacao";
 import { seedPlayoffs, vencedoresDasSemis } from "@/lib/playoffs";
+import { divisaoPorNivel } from "@/lib/divisoes";
 
 export async function criarTemporada(
   db: Db,
@@ -63,6 +64,21 @@ export async function cancelarInscricao(db: Db, seasonId: string, userId: string
   if (!season || season.status !== "inscricoes")
     throw new AppError("As inscrições já fecharam — fale com o admin.");
   await db.seasonEntry.deleteMany({ where: { seasonId, userId } });
+}
+
+// Cadastro via link: se houver temporada com inscrições abertas, inscreve o jogador
+// já num grupo provisório pelo nível. Retorna null (no-op) se não há liga aberta.
+export async function autoInscreverNaLigaAtiva(db: Db, userId: string, nivel: number) {
+  const season = await db.season.findFirst({
+    where: { status: "inscricoes" },
+    orderBy: { createdAt: "desc" },
+    include: { divisions: { orderBy: { order: "asc" } } },
+  });
+  if (!season) return null;
+  const preferredDivisionId = divisaoPorNivel(nivel, season.divisions);
+  await inscrever(db, season.id, userId, preferredDivisionId);
+  const divisao = season.divisions.find((d) => d.id === preferredDivisionId);
+  return { seasonId: season.id, seasonName: season.name, divisaoNome: divisao?.name ?? null };
 }
 
 export async function iniciarLiga(

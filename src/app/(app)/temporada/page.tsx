@@ -12,11 +12,12 @@ import { JogoCard } from "@/components/jogo-card";
 import { cn } from "@/lib/utils";
 
 export default async function TemporadaPage({ searchParams }: {
-  searchParams: Promise<{ divisao?: string }>;
+  searchParams: Promise<{ divisao?: string; bemvindo?: string }>;
 }) {
   const user = await requireUser();
   const { timezone } = await getSettings();
   const season = await getTemporadaAtual(db);
+  const sp = await searchParams;
 
   if (!season || season.status === "rascunho") {
     return <EmptyState emoji="🏆" titulo="Nenhuma temporada ativa"
@@ -42,6 +43,11 @@ export default async function TemporadaPage({ searchParams }: {
             <p className="text-sm text-muted-foreground">{datas.join(" · ")}</p>
           )}
         </header>
+        {sp.bemvindo && (
+          <p className="rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-primary">
+            🎾 Bem-vindo! Você já está na liga. O grupo abaixo é provisório — o professor confirma antes de começar.
+          </p>
+        )}
         <InscricaoButtons
           seasonId={season.id}
           inscrito={inscrito}
@@ -60,7 +66,7 @@ export default async function TemporadaPage({ searchParams }: {
   }
 
   // liga ou playoffs
-  const { divisao } = await searchParams;
+  const { divisao } = sp;
   const minhaDivisao = season.divisions.find((d) => d.players.some((p) => p.userId === user.id));
   const divisaoAtiva = season.divisions.find((d) => d.id === divisao) ?? minhaDivisao ?? season.divisions[0];
   if (!divisaoAtiva) return <EmptyState emoji="🤔" titulo="Temporada sem divisões" />;
