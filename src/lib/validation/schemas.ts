@@ -2,9 +2,9 @@ import { z } from "zod";
 
 export function normalizarTelefone(raw: string): string | null {
   const limpo = raw.replace(/[\s().-]/g, "");
+  // Apenas E.164, com código do país. O seletor de país no formulário monta esse formato
+  // (app internacional: não assumimos um país para números "soltos").
   if (/^\+\d{8,15}$/.test(limpo)) return limpo;
-  // Local (assume +55): 10-11 dígitos, sem zero de tronco (ex.: "011..." não vira E.164 válido).
-  if (/^[1-9]\d{9,10}$/.test(limpo)) return `+55${limpo}`;
   return null;
 }
 
@@ -16,7 +16,7 @@ export const telefoneSchema = z
       ctx.addIssue({
         code: "custom",
         message:
-          "Telefone inválido. Use DDD + número (ex.: 11 91234-5678) ou formato internacional (+351 912 345 678).",
+          "Telefone inválido. Escolha o país e digite o número (formato internacional, ex.: +351 912 345 678).",
       });
       return z.NEVER;
     }

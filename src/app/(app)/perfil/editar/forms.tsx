@@ -5,6 +5,7 @@ import { idle } from "@/lib/action-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/phone-input";
 import { alterarSenhaAction, atualizarPerfilAction } from "../actions";
 
 export const OPCOES_DISPONIBILIDADE = [
@@ -24,7 +25,7 @@ export function PerfilForm({ nome, telefone, disponibilidade }: {
       </div>
       <div className="space-y-1">
         <Label htmlFor="telefone">WhatsApp</Label>
-        <Input id="telefone" name="telefone" type="tel" defaultValue={telefone} required />
+        <PhoneInput id="telefone" defaultValue={telefone} />
       </div>
       <div className="space-y-1">
         <Label>Quando você costuma jogar?</Label>

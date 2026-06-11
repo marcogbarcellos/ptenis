@@ -7,12 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { PhoneInput } from "@/components/phone-input";
 
 const dados = [
   { id: "nome", label: "Nome", type: "text", auto: "name", placeholder: "" },
   { id: "email", label: "E-mail", type: "email", auto: "email", placeholder: "" },
-  { id: "telefone", label: "WhatsApp (com DDD)", type: "tel", auto: "tel", placeholder: "11 91234-5678" },
-  { id: "senha", label: "Senha", type: "password", auto: "new-password", placeholder: "Mínimo 6 caracteres" },
 ] as const;
 
 export function CadastroForm({ codigoConvite = "" }: { codigoConvite?: string }) {
@@ -36,10 +35,18 @@ export function CadastroForm({ codigoConvite = "" }: { codigoConvite?: string })
       {dados.map((c) => (
         <div key={c.id} className="space-y-1">
           <Label htmlFor={c.id}>{c.label}</Label>
-          <Input id={c.id} name={c.id} type={c.type} autoComplete={c.auto} placeholder={c.placeholder} required
-            minLength={c.id === "senha" ? 6 : undefined} />
+          <Input id={c.id} name={c.id} type={c.type} autoComplete={c.auto} placeholder={c.placeholder} required />
         </div>
       ))}
+      <div className="space-y-1">
+        <Label htmlFor="telefone">WhatsApp</Label>
+        <PhoneInput id="telefone" />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="senha">Senha</Label>
+        <Input id="senha" name="senha" type="password" autoComplete="new-password"
+          placeholder="Mínimo 6 caracteres" minLength={6} required />
+      </div>
       <Separator className="my-4" />
       <p className="text-sm font-medium">Seu nível de jogo (4 perguntas rápidas)</p>
       <p className="text-xs text-muted-foreground">É só um chute pra começar — o professor ajusta antes da liga.</p>
